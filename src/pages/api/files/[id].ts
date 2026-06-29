@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 import { USER_STORAGE_LIMIT_BYTES } from "@/constants/storage";
 import { getServerAuthSession } from "@/server/auth";
-import { destroyCloudinaryAsset } from "@/server/cloudinary";
+import { destroyLocalAsset } from "@/server/local-storage";
 import { db } from "@/server/db";
 import { collectDescendantIds, serializeFileEntry } from "@/server/files";
 
@@ -52,9 +52,9 @@ export default async function handler(
         select: { publicId: true },
       });
       const retained = new Set(references.map((item) => item.publicId));
-      for (const [publicId, resourceType] of assets) {
+      for (const [publicId, _resourceType] of assets) {
         if (!retained.has(publicId))
-          await destroyCloudinaryAsset(publicId, resourceType);
+          await destroyLocalAsset(publicId).catch(() => {});
       }
     }
 

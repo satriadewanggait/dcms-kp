@@ -12,43 +12,32 @@ const fileUpload = (
 ) => {
   const upload = async () => {
     try {
-      const folder = `google-drive-clone/${userId}`;
-      const signResponse = await fetch("/api/cloudinary/sign-upload", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ folder }),
+      // Read file as base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Strip data URL prefix (e.g. "data:application/pdf;base64,")
+          const commaIndex = result.indexOf(",");
+          resolve(commaIndex !== -1 ? result.slice(commaIndex + 1) : result);
+        };
+        reader.onerror = () => reject(new Error("Failed to read file."));
+        reader.readAsDataURL(file);
       });
 
-      if (!signResponse.ok) {
-        throw new Error("Failed to prepare Cloudinary upload.");
-      }
-
-      const { signature, timestamp, apiKey, cloudName } =
-        (await signResponse.json()) as {
-          signature: string;
-          timestamp: number;
-          apiKey: string;
-          cloudName: string;
-        };
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("api_key", apiKey);
-      formData.append("timestamp", String(timestamp));
-      formData.append("signature", signature);
-      formData.append("folder", folder);
-
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+      // Upload to local API with XHR (for progress tracking)
+      const payload = JSON.stringify({
+        fileName: fileNameOverride ?? file.name,
+        fileData: base64,
+      });
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", uploadUrl);
+        xhr.open("POST", "/api/upload/local");
+        xhr.setRequestHeader("Content-Type", "application/json");
 
         xhr.upload.onprogress = (event) => {
           if (!event.lengthComputable) return;
-
           const progress = Math.round((event.loaded / event.total) * 100);
           setUploads((prev) =>
             prev.map((upload) =>
@@ -59,51 +48,50 @@ const fileUpload = (
 
         xhr.onload = async () => {
           if (xhr.status < 200 || xhr.status >= 300) {
-            reject(new Error("Cloudinary upload failed."));
+            reject(new Error("Upload failed."));
             return;
           }
 
           const result = JSON.parse(xhr.responseText) as {
-            public_id: string;
-            resource_type: string;
-            secure_url: string;
+            url: string;
+            publicId: string;
+            resourceType: string;
           };
 
           try {
             await addFiles(
-              result.secure_url,
+              result.url,
               fileNameOverride ?? file.name,
               parentId,
               userId,
               userEmail,
-              result.public_id,
-              result.resource_type,
+              result.publicId,
+              result.resourceType,
               Number(file.size ?? 0),
             );
 
             setUploads((prev) =>
               prev.map((upload) =>
                 upload.id === uploadId
-                  ? { ...upload, progress: 100, fileLink: result.secure_url }
+                  ? { ...upload, progress: 100, fileLink: result.url }
                   : upload,
               ),
             );
             resolve();
           } catch (metadataError) {
-            await fetch("/api/cloudinary/destroy", {
+            await fetch("/api/upload/destroy", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                publicId: result.public_id,
-                resourceType: result.resource_type,
+                publicId: result.publicId,
               }),
             }).catch(console.error);
             reject(metadataError);
           }
         };
 
-        xhr.onerror = () => reject(new Error("Cloudinary upload failed."));
-        xhr.send(formData);
+        xhr.onerror = () => reject(new Error("Upload failed."));
+        xhr.send(payload);
       });
     } catch (error) {
       setUploads((prev) => prev.filter((upload) => upload.id !== uploadId));
