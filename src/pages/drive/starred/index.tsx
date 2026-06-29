@@ -41,8 +41,8 @@ export default function Index() {
   return (
     <>
       <Head>
-        <title>Starred - Google Drive</title>
-        <meta name="description" content="This is a google drive clone!" />
+        <title>Starred - PELNI</title>
+        <meta name="description" content="PELNI Shipping Agencies - Document Management" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div>
