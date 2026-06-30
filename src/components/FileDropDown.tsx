@@ -22,6 +22,7 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import TransferDialog from "./TransferDialog";
 import ShareDialog from "./ShareDialog";
+import { useState } from "react";
 
 function FileDropDown({
   file,
@@ -37,6 +38,7 @@ function FileDropDown({
     "",
   );
   const [shareOpen, setShareOpen] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const closeMenu = () => setOpenMenu("");
 
   const openFile = (fileLink: string) => {
@@ -148,6 +150,42 @@ function FileDropDown({
               >
                 <FiShare2 className="h-5 w-5" />
                 <span className="text-sm">Copy link</span>
+              </div>
+            )}
+            {confirmDelete ? (
+              <div className="my-2 space-y-1 px-3 py-1.5">
+                <p className="text-xs text-red-600">Delete forever?</p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setConfirmDelete(false);
+                      closeMenu();
+                      void deleteFile(
+                        file.id,
+                        file.isFolder,
+                        file.publicId,
+                        file.resourceType,
+                      );
+                    }}
+                    className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
+                  >
+                    Yes, delete
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="rounded bg-gray-300 px-3 py-1 text-xs hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => setConfirmDelete(true)}
+                className="my-2 flex items-center space-x-3 px-3 py-1.5 hover:cursor-pointer hover:bg-[#ddd]"
+              >
+                <RiDeleteBin6Line className="h-5 w-5" />
+                <span className="text-sm">Delete forever</span>
               </div>
             )}
             <div

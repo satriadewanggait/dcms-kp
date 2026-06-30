@@ -3,7 +3,6 @@ import GetFiles from "@/components/GetFiles";
 import GetFolders from "@/components/GetFolders";
 import FileHeader from "@/components/FileHeader";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useFetchFiles } from "@/hooks/fetchFiles";
 import { DotLoader } from "react-spinners";
@@ -81,14 +80,6 @@ export default function Home() {
                   <h2 className="mb-5 text-xl font-medium text-textC">
                     A place for all of your files
                   </h2>
-                  <Image
-                    draggable={false}
-                    src="/empty_state_drive.png"
-                    width={500}
-                    height={500}
-                    alt="empty-state"
-                    className="w-full max-w-2xl object-cover object-center"
-                  />
                 </div>
               )}
             </>

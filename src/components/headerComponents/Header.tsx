@@ -23,9 +23,6 @@ function Header() {
             className="h-10 w-full object-contain object-center"
             draggable={false}
           />
-          {/* <h1 className="hidden text-2xl tracking-tight text-textC tablet:block">
-            PELNI
-          </h1> */}
         </Link>
       </div>
       {/* search */}
