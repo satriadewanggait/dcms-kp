@@ -1,120 +1,126 @@
-# ![Google Drive Clone](./public/logo.png) Google Drive Clone ![Google Drive Clone](./public/logo.png)
+# ![DCMS - PELNI](./public/pelni-logo.png) DCMS — Dokumen & Content Management System ![DCMS - PELNI](./public/logo.png)
 
-A Google Drive-inspired file manager built with Next.js, NextAuth, PostgreSQL, Prisma, and Cloudinary.
+**DCMS (Dokumen & Content Management System)** adalah aplikasi manajemen file dan dokumen berbasis web untuk **PT Pelayaran Nasional Indonesia (PELNI)** — terinspirasi dari Google Drive.
 
-### Demo
+Dibangun dengan Next.js, NextAuth, PostgreSQL, Prisma, dan penyimpanan lokal.
 
-![Desktop mode](./public/desktop.png)
-![Desktop mode](./public/desktop2.png)
-![Tablet mode](./public/tablet.png)
-![Mobile mode](./public/mobile.png)
+### Fitur
 
-### Features
-
-- Google sign-in with NextAuth
-- File and folder creation, rename, move, copy, trash, and restore
-- Cloudinary-backed file uploads and delivery
-- Nested folders with breadcrumbs
-- Folder upload support
-- Storage usage tracking with a `200MB` per-user limit
-- Starred items and trash views
-- Public file sharing with `Only you` or `Anyone with the link`
-- Responsive UI for desktop and mobile
+- Login via Google dengan NextAuth
+- Buat folder, upload file, rename, pindahin, copy, trash, restore
+- Hapus permanen langsung dari My Drive
+- Penyimpanan file secara lokal (tidak bergantung Cloudinary)
+- Folder bersarang (nested) dengan breadcrumbs
+- Upload folder (drag & drop)
+- Tracking penggunaan storage dengan limit **200GB** per user
+- Item berbintang (starred) dan trash/bin
+- Berbagi file publik — "Only you" atau "Anyone with the link"
+- UI responsif untuk desktop dan mobile
+- Siap dijalankan dengan Docker
 
 ### Tech Stack
 
-**Next.js** | **TypeScript** | **React** | **Tailwind CSS** | **NextAuth.js** | **Prisma** | **PostgreSQL** | **Cloudinary** | **Vercel** | **Google Cloud Platform**
+**Next.js** | **TypeScript** | **React** | **Tailwind CSS** | **NextAuth.js** | **Prisma** | **PostgreSQL** | **Docker**
 
-## Local Setup
+## Setup Lokal
 
-1. Clone the repository.
+### Dengan Docker (rekomendasi)
+
+1. Clone repository.
+2. Jalankan:
+
+```bash
+docker compose up -d
+```
+
+3. Aplikasi berjalan di [http://localhost:3000](http://localhost:3000).
+
+Docker compose akan menjalankan:
+- **db**: PostgreSQL 16 (port `5432`)
+- **app**: Next.js dev server (port `3000`)
+
+### Manual
+
+1. Clone repository.
 2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Copy `.env.example` to `.env`.
-4. Fill in the required environment variables.
-5. Push the Prisma schema:
+3. Copy `.env.example` ke `.env` dan isi environment variables yang diperlukan.
+4. Push Prisma schema:
 
 ```bash
 npx prisma db push
 ```
 
-6. Start the development server:
+5. Jalankan development server:
 
 ```bash
 npm run dev
 ```
 
-The app runs at [http://localhost:3000](http://localhost:3000).
+Aplikasi berjalan di [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-Use [`.env.example`](./.env.example) as the template.
+Gunakan [`.env.example`](./.env.example) sebagai template.
 
-Required groups:
+Wajib diisi:
 
-- `NEXTAUTH_SECRET`,
-- `NEXTAUTH_URL`,
-- `GOOGLE_CLIENT_ID`,
-- `GOOGLE_CLIENT_SECRET`,
-- `DATABASE_URL`
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
+| Variable | Keterangan |
+|----------|-----------|
+| `DATABASE_URL` | Connection string PostgreSQL |
+| `NEXTAUTH_SECRET` | Secret untuk NextAuth |
+| `NEXTAUTH_URL` | URL aplikasi (http://localhost:3000) |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret |
 
-## Architecture Notes
+> **Catatan:** Untuk Google OAuth, pastikan callback URL sudah diset ke `/api/auth/callback/google`.
 
-- PostgreSQL, accessed through Prisma, stores accounts, sessions, and file/folder metadata.
-- Cloudinary stores uploaded file assets.
-- New uploads go to `google-drive-clone/{userId}/...` in Cloudinary.
-- Public share links are backed by PostgreSQL metadata and rendered through `/share/[token]`.
+## Arsitektur
 
-## Deployment Notes
+- **PostgreSQL** — menyimpan metadata akun, session, file, dan folder (diakses via Prisma).
+- **Local Storage** — file upload disimpan di `public/uploads/{userId}/` dan bisa diakses langsung lewat URL `/uploads/{userId}/{filename}`.
+- **Link publik** — disimpan di PostgreSQL dan dirender lewat `/share/[token]`.
 
-Before deploying:
+## Docker
 
-1. Set all environment variables in your hosting provider.
-2. Use a production-ready PostgreSQL `DATABASE_URL`.
-3. Run:
+### docker-compose.yml
 
-```bash
-npx prisma db push
+```yaml
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dcms
+    # ...
 ```
 
-4. Verify your Google OAuth app includes the correct callback URL:
-   `/api/auth/callback/google`
-5. Make sure Cloudinary credentials are valid and server-side secrets are not exposed as `NEXT_PUBLIC_*`.
-
-Build and start commands:
+Jalankan dengan:
 
 ```bash
-npm run build
-npm run start
+docker compose up -d
 ```
 
-If deploying on Vercel, set the same environment variables there before the first build.
+Untuk membangun ulang image:
 
-## Storage Notes
+```bash
+docker compose up -d --build
+```
 
-- The web app enforces a `200MB` limit per user, mainly for testing purposes.
-- PostgreSQL stores file size metadata used for quota checks.
-- Older records created before file size tracking may need backfilling if quota accuracy matters.
+## Catatan Storage
 
-## Sharing Notes
+- Limit penyimpanan: **200GB** per user.
+- PostgreSQL menyimpan metadata ukuran file untuk pengecekan kuota.
+- Semua file disimpan di folder `public/uploads/{userId}/` di dalam container.
 
-- Public sharing is currently file-based.
-- Shared files can be opened through a public link.
-- Shared links do not show the authenticated Drive layout.
+## Catatan Sharing
 
-## Contributing
-
-1. Create a branch from `dev`.
-2. Make your changes.
-3. Test locally.
-4. Open a pull request into `dev`.
+- Sharing hanya untuk file (bukan folder).
+- File yang dishare bisa dibuka lewat link publik.
+- Link publik tidak menampilkan layout Drive yang terautentikasi.
 
 ## License
 
@@ -122,9 +128,8 @@ MIT License.
 
 ## Acknowledgements
 
-- Inspired by Google Drive's core features and UI.
-- Built with the help of Next.js, PostgreSQL, Prisma, and Cloudinary documentation.
-- This project is a personal learning exercise and is not affiliated with Google.
-- If you find any issues or have suggestions, please open an issue or submit a pull request!
-- Made with ❤️ by Ezeibekwe Emmanuel - [LinkedIn](https://www.linkedin.com/in/ezeibekweemma/)
-- Happy coding and stay productive!
+- Terinspirasi dari fitur dan UI Google Drive.
+- Dibangun dengan Next.js, PostgreSQL, Prisma, dan Tailwind CSS.
+- Project ini adalah learning exercise untuk internal PELNI.
+- Jika ada issue atau saran, silakan buka issue atau pull request!
+- Made with ❤️ by Ezeibekwe Emmanuel — dimodifikasi dan dikustomisasi untuk PELNI oleh Brillian Andrie.
