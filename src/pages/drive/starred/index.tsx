@@ -4,7 +4,7 @@ import GetFolders from "@/components/GetFolders";
 import FileHeader from "@/components/FileHeader";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import { useFetchAllFiles } from "@/hooks/fetchAllFiles";
 import { DotLoader } from "react-spinners";
 
@@ -13,12 +13,12 @@ export default function Index() {
   const [isFile, setIsFile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { data: session } = useSession();
+  const { user } = useUser();
 
   // Fetch the full list so nested starred items are included
   const list = useFetchAllFiles(
-    session?.user.id ?? "",
-    session?.user.email ?? undefined,
+    user?.id ?? "",
+    user?.primaryEmailAddress?.emailAddress ?? undefined,
   );
 
   useEffect(() => {

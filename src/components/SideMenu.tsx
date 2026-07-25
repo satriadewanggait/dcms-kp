@@ -12,7 +12,7 @@ import {
   deleteFile,
   USER_STORAGE_LIMIT_BYTES,
 } from "@/API/Files";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/router";
 import { useFetchAllFiles } from "@/hooks/fetchAllFiles";
 import { formatBytes } from "@/utils/formatBytes";
@@ -26,9 +26,9 @@ function SideMenu() {
   const router = useRouter();
   const { Folder } = router.query;
 
-  const { data: session } = useSession();
-  const userId = session?.user.id;
-  const userEmail = session?.user.email;
+  const { user } = useUser();
+  const userId = user?.id;
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
   const allFiles = useFetchAllFiles(userId ?? "", userEmail ?? undefined);
   const currentUsageBytes = allFiles.reduce((total, entry) => {
     if (entry.isFolder) return total;
@@ -332,7 +332,7 @@ function SideMenu() {
       )}
       {/* navbar */}
       <Navbar />
-      <div className="absolute bottom-4 left-0 w-full pr-4">
+      <div className="absolute bottom-24 left-0 w-full pr-4">
         <div className="rounded-2xl bg-white/90 px-2 py-3 text-sm text-textC shadow-sm shadow-[#ddd] tablet:px-4">
           <div className="mb-2 flex items-center justify-between font-medium">
             <span className="hidden tablet:block">Storage</span>

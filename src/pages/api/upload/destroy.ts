@@ -1,22 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-
-import { getServerAuthSession } from "@/server/auth";
+import { getClerkUserId } from "@/server/clerk-auth";
 import { destroyLocalAsset } from "@/server/local-storage";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  if (req.method !== "POST")
+  const ownerId = await getClerkUserId(req);
+  if (!ownerId) return res.status(401).json({ error: "Unauthorized" });
+
+  if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
-  const session = await getServerAuthSession({ req, res });
-  if (!session?.user.id) return res.status(401).json({ error: "Unauthorized" });
+  }
 
-  const body = req.body as Record<string, unknown>;
-  const publicId =
-    typeof body.publicId === "string" ? body.publicId.trim() : "";
-  if (!publicId) return res.status(400).json({ error: "publicId is required" });
+  const { publicId } = req.body;
+  if (!publicId) {
+    return res.status(400).json({ error: "publicId is required" });
+  }
 
-  await destroyLocalAsset(publicId).catch(() => {});
-  return res.status(200).json({ result: "ok" });
+  try {
+    await destroyLocalAsset(publicId);
+    return res.status(200).json({ result: "ok" });
+  } catch {
+    return res.status(500).json({ error: "Failed to delete file" });
+  }
 }

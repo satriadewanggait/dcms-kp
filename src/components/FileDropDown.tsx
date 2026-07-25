@@ -19,7 +19,7 @@ import {
   trashFile,
 } from "@/API/Files";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import TransferDialog from "./TransferDialog";
 import ShareDialog from "./ShareDialog";
 import { useState } from "react";
@@ -33,7 +33,7 @@ function FileDropDown({
   setRenameToggle,
 }: FileDropDownProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [transferMode, setTransferMode] = React.useState<"move" | "copy" | "">(
     "",
   );
@@ -229,7 +229,7 @@ function FileDropDown({
           </>
         )}
       </section>
-      {transferMode && session?.user.id && (
+      {transferMode && user?.id && (
         <TransferDialog
           item={file}
           mode={transferMode}
@@ -242,8 +242,8 @@ function FileDropDown({
               await moveEntry(
                 file,
                 destinationId,
-                session.user.id,
-                session.user.email ?? undefined,
+                user.id,
+                user.primaryEmailAddress?.emailAddress ?? undefined,
               );
               return;
             }
@@ -251,8 +251,8 @@ function FileDropDown({
             await copyEntry(
               file,
               destinationId,
-              session.user.id,
-              session.user.email ?? undefined,
+              user.id,
+              user.primaryEmailAddress?.emailAddress ?? undefined,
             );
           }}
         />

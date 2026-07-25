@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
-import { signIn, useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import UserInfo from "./UserInfo";
 import Link from "next/link";
 import Search from "./Search";
@@ -9,7 +9,7 @@ import { FaUserCircle } from "react-icons/fa";
 
 function Header() {
   const [displayUserInfo, setDisplayUserInfo] = useState(false);
-  const { data: session, status } = useSession();
+  const { user, isSignedIn } = useUser();
 
   return (
     <header className="relative flex h-16 w-screen items-center justify-between px-5 py-2">
@@ -23,24 +23,25 @@ function Header() {
             className="h-10 w-full object-contain object-center"
             draggable={false}
           />
+          <span className="hidden text-sm font-semibold text-gray-700 tablet:block">DCMS</span>
         </Link>
       </div>
       {/* search */}
       <Search />
       <div
         onClick={() => {
-          if (status === "authenticated") {
+          if (isSignedIn) {
             setDisplayUserInfo((prev) => !prev);
             return;
           }
 
-          void signIn("google");
+          window.location.href = "/login";
         }}
         className="ml-3 h-8 w-8 cursor-pointer overflow-hidden rounded-full"
       >
-        {session ? (
+        {user?.imageUrl ? (
           <Image
-            src={session?.user.image as string}
+            src={user.imageUrl}
             className="h-full w-full rounded-full object-center"
             height={500}
             width={500}
@@ -52,7 +53,7 @@ function Header() {
         )}
       </div>
       <div className="absolute right-5 top-16">
-        {session && displayUserInfo && (
+        {user && displayUserInfo && (
           <UserInfo setDisplayUserInfo={setDisplayUserInfo} />
         )}
       </div>

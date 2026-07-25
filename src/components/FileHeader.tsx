@@ -1,6 +1,5 @@
 import { useRouter } from "next/router";
 import React from "react";
-import { AiFillCaretDown } from "react-icons/ai";
 import { BsArrowLeftCircle } from "react-icons/bs";
 
 type BreadcrumbItem = {
@@ -43,7 +42,7 @@ function FileHeader({
                   <h2>{item.label}</h2>
                 ) : (
                   <button
-                    onClick={() => router.push(route)}
+                    onClick={(): void => router.push(route)}
                     className="transition hover:text-blue-600"
                   >
                     {item.label}
@@ -53,20 +52,6 @@ function FileHeader({
             );
           })}
         </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <button className="flex items-center space-x-2 rounded-lg border border-textC px-4 py-1 text-sm font-medium">
-          <span>Type</span>
-          <AiFillCaretDown className="mt-0.5 h-3 w-3" />
-        </button>
-        <button className="flex items-center space-x-2 rounded-lg border border-textC px-4 py-1 text-sm font-medium">
-          <span>People</span>
-          <AiFillCaretDown className="mt-0.5 h-3 w-3" />
-        </button>
-        <button className="flex items-center space-x-2 rounded-lg border border-textC px-4 py-1 text-sm font-medium">
-          <span>Modified</span>
-          <AiFillCaretDown className="mt-0.5 h-3 w-3" />
-        </button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useFetchAllFiles } from "@/hooks/fetchAllFiles";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import React, { useMemo, useState } from "react";
 
 function TransferDialog({
@@ -13,12 +13,12 @@ function TransferDialog({
   onClose: () => void;
   onConfirm: (destinationId: string) => Promise<void>;
 }) {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [destinationId, setDestinationId] = useState(item.folderId || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const allFiles = useFetchAllFiles(
-    session?.user.id ?? "",
-    session?.user.email ?? undefined,
+    user?.id ?? "",
+    user?.primaryEmailAddress?.emailAddress ?? undefined,
   );
 
   const folderOptions = useMemo(() => {

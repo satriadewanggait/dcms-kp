@@ -1,5 +1,5 @@
 import { renameFile } from "@/API/Files";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import React, { useState } from "react";
 
 // The Rename component displays a pop-up for rename input.
@@ -11,12 +11,12 @@ function Rename({
   fileExtension,
 }: renameProps) {
   const [newName, setNewName] = useState(fileName);
-  const { data: session } = useSession();
+  const { user } = useUser();
 
   const rename = async () => {
     // Check if the file name is empty
     if (newName === "") return;
-    if (!session?.user.id) return;
+    if (!user?.id) return;
 
     let renamed = false;
     if (isFolder) {
@@ -24,8 +24,8 @@ function Rename({
         fileId,
         newName,
         isFolder,
-        session.user.id,
-        session.user.email as string,
+        user.id,
+        user.primaryEmailAddress?.emailAddress as string,
       );
     } else {
       const formatName = newName.includes(".")
@@ -35,8 +35,8 @@ function Rename({
         fileId,
         formatName,
         isFolder,
-        session.user.id,
-        session.user.email as string,
+        user.id,
+        user.primaryEmailAddress?.emailAddress as string,
       );
     }
     if (renamed) {

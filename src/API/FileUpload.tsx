@@ -12,29 +12,13 @@ const fileUpload = (
 ) => {
   const upload = async () => {
     try {
-      // Read file as base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Strip data URL prefix (e.g. "data:application/pdf;base64,")
-          const commaIndex = result.indexOf(",");
-          resolve(commaIndex !== -1 ? result.slice(commaIndex + 1) : result);
-        };
-        reader.onerror = () => reject(new Error("Failed to read file."));
-        reader.readAsDataURL(file);
-      });
-
-      // Upload to local API with XHR (for progress tracking)
-      const payload = JSON.stringify({
-        fileName: fileNameOverride ?? file.name,
-        fileData: base64,
-      });
+      const formData = new FormData();
+      formData.append("fileName", fileNameOverride ?? file.name);
+      formData.append("file", file);
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/upload/local");
-        xhr.setRequestHeader("Content-Type", "application/json");
 
         xhr.upload.onprogress = (event) => {
           if (!event.lengthComputable) return;
@@ -48,7 +32,12 @@ const fileUpload = (
 
         xhr.onload = async () => {
           if (xhr.status < 200 || xhr.status >= 300) {
-            reject(new Error("Upload failed."));
+            let msg = "Upload failed.";
+            try {
+              const body = JSON.parse(xhr.responseText);
+              if (body?.error) msg = body.error;
+            } catch {}
+            reject(new Error(msg));
             return;
           }
 
@@ -91,7 +80,7 @@ const fileUpload = (
         };
 
         xhr.onerror = () => reject(new Error("Upload failed."));
-        xhr.send(payload);
+        xhr.send(formData);
       });
     } catch (error) {
       setUploads((prev) => prev.filter((upload) => upload.id !== uploadId));

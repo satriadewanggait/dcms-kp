@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { USER_STORAGE_LIMIT_BYTES } from "@/constants/storage";
-import { getServerAuthSession } from "@/server/auth";
+import { getClerkUserId } from "@/server/clerk-auth";
 import { destroyLocalAsset } from "@/server/local-storage";
 import { db } from "@/server/db";
 import { collectDescendantIds, serializeFileEntry } from "@/server/files";
@@ -23,8 +23,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const session = await getServerAuthSession({ req, res });
-  const ownerId = session?.user.id;
+  const ownerId = await getClerkUserId(req);
   const id = typeof req.query.id === "string" ? req.query.id : "";
   if (!ownerId) return res.status(401).json({ error: "Unauthorized" });
   if (!id) return res.status(400).json({ error: "File id is required." });

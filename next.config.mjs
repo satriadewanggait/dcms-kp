@@ -7,6 +7,10 @@ await import("./src/env.mjs");
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
+  allowedDevOrigins: ["dcms.jagoankode.site"],
+  experimental: {
+    proxyClientMaxBodySize: "50MB",
+  },
 
   /**
    * If you are using `appDir` then you must comment the below `i18n` config out.
@@ -26,6 +30,10 @@ const config = {
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "img.clerk.com",
       },
     ],
   },

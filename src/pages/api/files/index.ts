@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { USER_STORAGE_LIMIT_BYTES } from "@/constants/storage";
-import { getServerAuthSession } from "@/server/auth";
+import { getClerkUserId } from "@/server/clerk-auth";
 import { db } from "@/server/db";
 import { serializeFileEntry } from "@/server/files";
 
@@ -13,9 +13,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const session = await getServerAuthSession({ req, res });
-  const ownerId = session?.user.id;
+  const ownerId = await getClerkUserId(req);
   if (!ownerId) return res.status(401).json({ error: "Unauthorized" });
+
+  // Auto-create user record if not yet synced via Clerk webhook
+  await db.user.upsert({
+    where: { id: ownerId },
+    update: {},
+    create: { id: ownerId },
+  });
 
   if (req.method === "GET") {
     const entries = await db.fileEntry.findMany({

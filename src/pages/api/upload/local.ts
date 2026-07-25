@@ -1,14 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-
-import { getServerAuthSession } from "@/server/auth";
+import { getClerkUserId } from "@/server/clerk-auth";
+import { storeLocalAssetFromBuffer } from "@/server/local-storage";
+import formidable from "formidable";
+import { readFile } from "fs/promises";
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: "50mb",
-    },
+    bodyParser: false,
   },
 };
 
@@ -16,34 +14,34 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  if (req.method !== "POST")
+  const ownerId = await getClerkUserId(req);
+  if (!ownerId) return res.status(401).json({ error: "Unauthorized" });
+
+  if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
-
-  const session = await getServerAuthSession({ req, res });
-  if (!session?.user.id)
-    return res.status(401).json({ error: "Unauthorized" });
-
-  const { fileName, fileData } = req.body as {
-    fileName?: string;
-    fileData?: string;
-  };
-  if (!fileName || !fileData) {
-    return res.status(400).json({ error: "fileName and fileData are required" });
   }
 
-  const buffer = Buffer.from(fileData, "base64");
-  const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", session.user.id);
-  const filePath = path.join(uploadDir, safeName);
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const form = formidable({ multiples: false, maxFileSize: MAX_FILE_SIZE });
 
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(filePath, buffer);
+  try {
+    const [fields, files] = await form.parse(req);
+    const uploadedFile = files.file?.[0];
+    if (!uploadedFile) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-  const url = `/uploads/${session.user.id}/${safeName}`;
+    const fileName =
+      (fields.fileName?.[0]) ||
+      uploadedFile.originalFilename ||
+      "untitled";
 
-  return res.status(200).json({
-    url,
-    publicId: url,
-    resourceType: "raw",
-  });
+    const buffer = await readFile(uploadedFile.filepath);
+    const result = await storeLocalAssetFromBuffer(fileName, buffer, ownerId);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Upload failed:", error);
+    return res.status(500).json({ error: "Failed to store file" });
+  }
 }

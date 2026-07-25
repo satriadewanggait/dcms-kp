@@ -3,10 +3,11 @@ import { HiOutlinePlus } from "react-icons/hi";
 import { PiSignOutBold } from "react-icons/pi";
 import { AiOutlineClose } from "react-icons/ai";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 function UserInfo({ setDisplayUserInfo }: UserInfoProps) {
-  const { data: session } = useSession();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   return (
     <div
       className="relative z-10 flex flex-col items-center justify-center
@@ -19,19 +20,25 @@ function UserInfo({ setDisplayUserInfo }: UserInfoProps) {
       >
         <AiOutlineClose className="h-5 w-5 rounded-full stroke-2 text-textC" />
       </button>
-      <p>{session?.user.email}</p>
-      <div className="h-20 w-20 rounded-full border">
-        <Image
-          src={session?.user.image as string}
-          className="h-full w-full rounded-full object-center"
-          height={500}
-          width={500}
-          draggable={false}
-          alt="avatar"
-        />
-      </div>
+      <p>{user?.primaryEmailAddress?.emailAddress}</p>
+      {user?.imageUrl ? (
+        <div className="h-20 w-20 rounded-full border">
+          <Image
+            src={user.imageUrl}
+            className="h-full w-full rounded-full object-center"
+            height={500}
+            width={500}
+            draggable={false}
+            alt="avatar"
+          />
+        </div>
+      ) : (
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-3xl font-semibold text-blue-600">
+          {user?.firstName?.charAt(0)?.toUpperCase() || "U"}
+        </div>
+      )}
       <h2 className="tablet:text-2xl text-xl font-normal">
-        Hi, {session?.user.name}!
+        Hi, {user?.firstName || user?.username || "User"}!
       </h2>
       <button className="rounded-full border border-black px-7 py-2 text-textC2 hover:bg-[#d3dfee]">
         Manage your Google Account

@@ -3,7 +3,7 @@ import GetFiles from "@/components/GetFiles";
 import GetFolders from "@/components/GetFolders";
 import FileHeader from "@/components/FileHeader";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import { useFetchFiles } from "@/hooks/fetchFiles";
 import { DotLoader } from "react-spinners";
 
@@ -12,13 +12,13 @@ export default function Home() {
   const [isFile, setIsFile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { data: session } = useSession();
+  const { user } = useUser();
 
   // Fetch the list of files and folders
   const list = useFetchFiles(
     "",
-    session?.user.id ?? "",
-    session?.user.email ?? undefined,
+    user?.id ?? "",
+    user?.primaryEmailAddress?.emailAddress ?? undefined,
   );
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div>
-        <FileHeader headerName={"My Drive"} />
+        <FileHeader headerName={"Welcome to Drive"} />
         <div className="h-[75vh] w-full overflow-y-auto p-5">
           {/* If the list is loading, display the loading state */}
           {!isFile && !isFolder && isLoading ? (

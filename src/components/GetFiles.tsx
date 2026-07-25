@@ -3,7 +3,7 @@ import { useFetchFiles } from "@/hooks/fetchFiles";
 import Image from "next/image";
 import fileIcons from "@/components/fileIcons";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import FileDropDown from "./FileDropDown";
 import { useFetchAllFiles } from "@/hooks/fetchAllFiles";
 import Rename from "./Rename";
@@ -12,10 +12,10 @@ function GetFiles({ folderId, select }: { folderId: string; select: string }) {
   const [openMenu, setOpenMenu] = useState("");
   const [renameToggle, setRenameToggle] = useState("");
 
-  const { data: session } = useSession();
+  const { user } = useUser();
 
-  const userId = session?.user.id ?? "";
-  const userEmail = session?.user.email ?? undefined;
+  const userId = user?.id ?? "";
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? undefined;
   const folderFiles = useFetchFiles(folderId, userId, userEmail);
   const allFiles = useFetchAllFiles(userId, userEmail);
   const fileList = select ? allFiles : folderFiles;
