@@ -102,6 +102,8 @@ function GetFiles({ folderId, select }: { folderId: string; select: string }) {
         !(file?.isTrashed ?? false);
     else if (select === "trashed")
       condition = !file?.isFolder && (file?.isTrashed ?? false);
+    else if (select === "shared")
+      condition = !file?.isFolder && (file?.isSharedWithMe === true) && !(file?.isTrashed ?? false);
 
     return (
       condition && (

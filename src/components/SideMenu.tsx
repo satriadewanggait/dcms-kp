@@ -126,7 +126,7 @@ function SideMenu() {
       await replaceConflictingEntry(conflict);
     }
 
-    let payload = {
+    const payload = {
       folderName: nextFolderName,
       isFolder: true,
       isStarred: false,

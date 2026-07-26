@@ -58,7 +58,34 @@ export default async function handler(
   }
 
   switch (eventType) {
-    case "user.created":
+    case "user.created": {
+      const clerkId = data.id as string;
+      const emailAddr = data.email_addresses as Array<Record<string, unknown>> | undefined;
+      const email = (emailAddr?.[0]?.email_address as string) ?? "";
+      const name =
+        (data.first_name as string) ||
+        (data.last_name as string) ||
+        (data.username as string) ||
+        "";
+      const image = (data.image_url as string) || null;
+
+      // Semua user baru pending approval — admin harus approve dulu
+      await db.user.upsert({
+        where: { id: clerkId },
+        update: { name, email, image },
+        create: {
+          id: clerkId,
+          name,
+          email,
+          image,
+          role: "user",
+          status: "pending",
+        },
+      });
+
+      return res.status(200).json({ message: "User created (pending)" });
+    }
+
     case "user.updated": {
       const clerkId = data.id as string;
       const emailAddr = data.email_addresses as Array<Record<string, unknown>> | undefined;
@@ -70,10 +97,24 @@ export default async function handler(
         "";
       const image = (data.image_url as string) || null;
 
+      // Sync public_metadata dari Clerk ke DB (misal admin diubah dari Dashboard)
+      const publicMetadata = data.public_metadata as Record<string, unknown> | undefined;
+      const roleFromMetadata = publicMetadata?.role as string | undefined;
+
+      const updateData: Record<string, unknown> = { name, email, image };
+      if (roleFromMetadata) updateData.role = roleFromMetadata;
+
       await db.user.upsert({
         where: { id: clerkId },
-        update: { name, email, image },
-        create: { id: clerkId, name, email, image },
+        update: updateData,
+        create: {
+          id: clerkId,
+          name,
+          email,
+          image,
+          role: roleFromMetadata ?? "user",
+          status: "pending",
+        },
       });
 
       return res.status(200).json({ message: "User synced" });

@@ -24,11 +24,36 @@ export default async function handler(
   });
 
   if (req.method === "GET") {
-    const entries = await db.fileEntry.findMany({
+    // Ambil file milik sendiri
+    const ownedEntries = await db.fileEntry.findMany({
       where: { ownerId },
       orderBy: { createdAt: "asc" },
     });
-    return res.status(200).json(entries.map(serializeFileEntry));
+
+    // Ambil file yang di-share ke user ini
+    const sharedFiles = await db.sharedFile.findMany({
+      where: { sharedWithId: ownerId },
+      include: {
+        file: true,
+        sharedBy: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    // Tandai shared files
+    const sharedEntries = sharedFiles.map((sf) => ({
+      ...serializeFileEntry(sf.file),
+      isSharedWithMe: true,
+      sharedByName: sf.sharedBy.name ?? sf.sharedBy.email ?? "Unknown",
+    }));
+
+    const entries = [
+      ...ownedEntries.map((e) => ({ ...serializeFileEntry(e), isSharedWithMe: false })),
+      ...sharedEntries,
+    ];
+
+    return res.status(200).json(entries);
   }
 
   if (req.method !== "POST") {

@@ -15,7 +15,11 @@ model User {
   name          String?
   email         String?     @unique
   image         String?
+  role          String      @default("user")
+  status        String      @default("pending")
   fileEntries   FileEntry[]
+  sharedWith    SharedFile[] @relation("SharedFileWith")
+  sharedBy      SharedFile[] @relation("SharedFileBy")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @default(now()) @updatedAt
 }
@@ -43,4 +47,19 @@ model FileEntry {
   @@index([ownerId, isStarred])
   @@index([ownerId, isTrashed])
   @@index([publicId])
+  sharedEntries SharedFile[] @relation("SharedFileEntry")
+}
+
+model SharedFile {
+  id          String   @id @default(cuid())
+  fileId      String
+  file        FileEntry @relation("SharedFileEntry", fields: [fileId], references: [id], onDelete: Cascade)
+  sharedWithId String
+  sharedWith  User     @relation("SharedFileWith", fields: [sharedWithId], references: [id], onDelete: Cascade)
+  sharedById  String
+  sharedBy    User     @relation("SharedFileBy", fields: [sharedById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([fileId, sharedWithId])
+  @@index([sharedWithId])
 }

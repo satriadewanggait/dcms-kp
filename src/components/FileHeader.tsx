@@ -42,7 +42,7 @@ function FileHeader({
                   <h2>{item.label}</h2>
                 ) : (
                   <button
-                    onClick={(): void => router.push(route)}
+                    onClick={() => { void router.push(route); }}
                     className="transition hover:text-blue-600"
                   >
                     {item.label}

@@ -65,6 +65,8 @@ interface FileListProps {
   fileSize?: number;
   isShared?: boolean;
   shareToken?: string;
+  isSharedWithMe?: boolean;
+  sharedByName?: string;
 }
 interface payloadProps {
   folderName: string;

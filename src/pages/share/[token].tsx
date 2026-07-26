@@ -120,9 +120,7 @@ export const getServerSideProps: GetServerSideProps<{
       })
     : null;
 
-  const file = entry
-    ? { ...serializeFileEntry(entry), userId: undefined, userEmail: undefined }
-    : null;
+  const file = entry ? serializeFileEntry(entry) : null;
   return { props: { file } };
 };
 

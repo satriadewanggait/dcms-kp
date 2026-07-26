@@ -1,6 +1,6 @@
 import { ClerkProvider, useUser } from "@clerk/nextjs";
 import { type AppType } from "next/app";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import "@/styles/globals.css";
 import Header from "@/components/headerComponents/Header";
@@ -10,6 +10,45 @@ import SideMenu from "@/components/SideMenu";
 function AuthGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
+  const [statusChecked, setStatusChecked] = useState(false);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      void router.push("/login");
+      return;
+    }
+
+    // Cek status user
+    const checkStatus = async () => {
+      try {
+        const res = await fetch("/api/user/status");
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.status === "pending") {
+          void router.push("/pending-approval");
+          return;
+        }
+        if (data.status === "rejected") {
+          void router.push("/rejected");
+          return;
+        }
+        if (data.status === "inactive") {
+          void router.push("/rejected");
+          return;
+        }
+        // Kalau active, lanjut
+        setStatusChecked(true);
+      } catch {
+        // Error fetching status, tetap lanjut aja
+        setStatusChecked(true);
+      }
+    };
+
+    checkStatus();
+  }, [isLoaded, isSignedIn, router]);
 
   if (!isLoaded) {
     return (
@@ -20,13 +59,18 @@ function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (!isSignedIn) {
-    // Wait until loaded then redirect
-    if (typeof window !== "undefined") {
-      void router.push("/login");
-    }
     return (
       <main className="flex min-h-screen items-center justify-center bg-bgc">
         <p className="text-textC">Redirecting to login...</p>
+      </main>
+    );
+  }
+
+  // Tunggu status check selesai
+  if (!statusChecked) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-bgc">
+        <p className="text-textC">Checking access...</p>
       </main>
     );
   }
@@ -37,13 +81,16 @@ function AuthGate({ children }: { children: ReactNode }) {
 const MyApp: AppType = ({ Component, pageProps }) => {
   const router = useRouter();
 
-  // Public routes
+  // Public routes — no auth needed
   const isSharePage = router.pathname.startsWith("/share/");
   const isAuthPage =
     router.pathname === "/login" || router.pathname === "/register";
+  const isPublicPage =
+    router.pathname === "/pending-approval" ||
+    router.pathname === "/rejected" ||
+    router.pathname === "/";
 
-  // Public layout — share & auth pages
-  if (isSharePage || isAuthPage) {
+  if (isSharePage || isAuthPage || isPublicPage) {
     return (
       <ClerkProvider {...pageProps}>
         <main className="min-h-screen bg-bgc">

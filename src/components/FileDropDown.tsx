@@ -149,7 +149,7 @@ function FileDropDown({
                 className="my-2 flex items-center space-x-3 px-3 py-1.5 hover:cursor-pointer hover:bg-[#ddd]"
               >
                 <FiShare2 className="h-5 w-5" />
-                <span className="text-sm">Copy link</span>
+                <span className="text-sm">Share</span>
               </div>
             )}
             {confirmDelete ? (
@@ -257,7 +257,7 @@ function FileDropDown({
           }}
         />
       )}
-      {shareOpen && !isFolderComp && (
+      {shareOpen && (
         <ShareDialog
           file={file}
           onClose={() => {
