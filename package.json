@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "unset CLERK_WEBHOOK_SECRET && next dev",
+    "dev": "next dev",
     "start": "next start",
     "postinstall": "prisma generate",
     "build": "prisma migrate deploy && next build",
